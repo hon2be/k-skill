@@ -11,7 +11,7 @@
 ## 먼저 필요한 것
 
 - Python 3.10+
-- `python -m pip install SRTrain`
+- `python3 -m pip install SRTrain`
 - [공통 설정 가이드](../setup.md) 완료
 - [보안/시크릿 정책](../security-and-secrets.md) 확인
 
@@ -31,16 +31,18 @@
 
 ## 기본 흐름
 
-1. 먼저 열차를 조회합니다.
-2. 후보 열차의 출발/도착 시각, 좌석 여부, 운임을 보여줍니다.
-3. 대상 열차가 명확할 때만 예약합니다.
-4. 예약 확인/취소는 예약을 다시 식별한 뒤 진행합니다.
+1. `SRTrain` 패키지가 없으면 다른 방법으로 우회하지 말고 먼저 전역 설치합니다.
+2. `KSKILL_SRT_ID`, `KSKILL_SRT_PASSWORD` 가 없으면 채팅에 붙여 넣게 하지 말고 로컬 secrets 등록 절차를 안내합니다.
+3. 먼저 열차를 조회합니다.
+4. 후보 열차의 출발/도착 시각, 좌석 여부, 운임을 보여줍니다.
+5. 대상 열차가 명확할 때만 예약합니다.
+6. 예약 확인/취소는 예약을 다시 식별한 뒤 진행합니다.
 
 ## 예시
 
 ```bash
 SOPS_AGE_KEY_FILE="$HOME/.config/k-skill/age/keys.txt" \
-sops exec-env "$HOME/.config/k-skill/secrets.env" 'python - <<'"'"'PY'"'"'
+sops exec-env "$HOME/.config/k-skill/secrets.env" 'python3 - <<'"'"'PY'"'"'
 import os
 from SRT import SRT
 

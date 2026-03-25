@@ -42,6 +42,8 @@ sudo pacman -S sops age
 winget install Mozilla.SOPS FiloSottile.age
 ```
 
+도구가 없으면 다른 비밀 관리 방식으로 우회하지 말고, 이 도구들을 먼저 설치하는 것을 기본으로 합니다.
+
 ## 2) age key 만들기
 
 ```bash
@@ -79,6 +81,23 @@ cd ~/.config/k-skill
 sops --encrypt --input-type dotenv --output-type dotenv \
   secrets.env.plain > secrets.env
 rm secrets.env.plain
+```
+
+## 시크릿이 없을 때의 기본 응답
+
+인증이 필요한 스킬에서 값이 비어 있으면 다음 식으로 안내하는 것을 기본으로 합니다.
+
+- 어떤 값이 필요한지 정확한 변수 이름으로 알려주기
+- 그 값을 채팅에 보내지 말라고 안내하기
+- 아래 절차로 로컬에 직접 등록하게 하기
+
+예:
+
+```text
+이 작업에는 KSKILL_SRT_ID, KSKILL_SRT_PASSWORD 가 필요합니다.
+값을 채팅창에 붙여 넣지 말고, ~/.config/k-skill/secrets.env.plain 에 채운 뒤
+sops 로 ~/.config/k-skill/secrets.env 로 암호화해 주세요.
+끝나면 plaintext 파일은 지우고 bash scripts/check-setup.sh 로 다시 확인해 주세요.
 ```
 
 ## 5) 런타임 주입 확인

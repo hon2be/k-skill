@@ -20,6 +20,13 @@ metadata:
 - 암호화 확인
 - 런타임 주입 확인
 
+이 스킬의 기본 정책:
+
+- 시크릿이 없으면 필요한 값 이름을 사용자에게 정확히 알려준다
+- 값을 채팅창에 붙여 넣으라고 하지 않는다
+- 로컬에 안전하게 등록하는 절차를 안내한 뒤 다시 진행한다
+- 필요한 패키지가 없으면 대체 구현을 찾기보다 전역 설치를 먼저 시도한다
+
 ## Why this is the default setup path
 
 - 계정 가입이 필요 없다
@@ -117,6 +124,25 @@ sops --encrypt --input-type dotenv --output-type dotenv \
   secrets.env.plain > secrets.env
 rm secrets.env.plain
 ```
+
+### Missing secret response template
+
+인증 스킬에서 값이 빠졌을 때는 다음 식으로 안내한다.
+
+```text
+이 작업에는 <REQUIRED_SECRET_NAMES> 이 필요합니다.
+값을 채팅창에 보내지 말고 ~/.config/k-skill/secrets.env.plain 에 직접 채운 뒤
+sops 로 ~/.config/k-skill/secrets.env 로 암호화해 주세요.
+암호화가 끝나면 plaintext 파일은 지우고 bash scripts/check-setup.sh 로 다시 확인해 주세요.
+```
+
+예를 들면:
+
+- SRT: `KSKILL_SRT_ID`, `KSKILL_SRT_PASSWORD`
+- KTX: `KSKILL_KTX_ID`, `KSKILL_KTX_PASSWORD`
+- 서울 지하철: `SEOUL_OPEN_API_KEY`
+
+시크릿이 비어 있다는 이유로 다른 서비스나 비공식 우회 경로를 자동 선택하지 않는다.
 
 ### 5. Verify runtime injection
 

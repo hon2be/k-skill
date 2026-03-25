@@ -23,7 +23,7 @@ metadata:
 ## Prerequisites
 
 - Node.js 18+
-- `npm install kbo-game`
+- `npm install -g kbo-game`
 
 ## Inputs
 
@@ -32,11 +32,27 @@ metadata:
 
 ## Workflow
 
+### 0. Install the package globally when missing
+
+`npm root -g` 아래에 `kbo-game` 이 없으면 다른 구현으로 우회하지 말고 전역 Node 패키지 설치를 먼저 시도한다.
+
+```bash
+npm install -g kbo-game
+```
+
+패키지가 없다는 이유로 다른 비공식 scoreboard 소스를 자동 채택하지 않는다.
+
 ### 1. Fetch the date
 
 ```bash
-node --input-type=module - <<'JS'
-import { getGame } from "kbo-game";
+GLOBAL_NPM_ROOT="$(npm root -g)" node --input-type=module - <<'JS'
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+
+const entry = pathToFileURL(
+  path.join(process.env.GLOBAL_NPM_ROOT, "kbo-game", "dist", "index.js"),
+).href;
+const { getGame } = await import(entry);
 
 const date = "2026-03-25";
 const games = await getGame(new Date(`${date}T00:00:00+09:00`));
@@ -44,7 +60,7 @@ console.log(JSON.stringify(games, null, 2));
 JS
 ```
 
-`kbo-game@0.0.2` 기준 실제 export는 `getGame` 하나이며, 문자열 날짜(`"2026-03-25"`)를 직접 넘기면 실패한다. 항상 `Date` 객체로 변환해서 호출한다.
+`kbo-game@0.0.2` 기준 실제 export는 `getGame` 하나이며, 문자열 날짜(`"2026-03-25"`)를 직접 넘기면 실패한다. 항상 `Date` 객체로 변환해서 호출한다. 전역 설치를 기본으로 쓰므로 inline snippet에서는 전역 npm root 아래 entry file을 직접 import 한다.
 
 ### 2. Normalize for humans
 

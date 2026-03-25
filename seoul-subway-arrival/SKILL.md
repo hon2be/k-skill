@@ -39,9 +39,20 @@ metadata:
 
 ## Workflow
 
-### 1. Load the API key securely
+### 1. Stop for secure registration when the API key is missing
 
 평문 key를 붙여 넣지 않는다.
+
+`SEOUL_OPEN_API_KEY`, `~/.config/k-skill/secrets.env`, `~/.config/k-skill/age/keys.txt` 중 하나라도 없으면 다음 식으로 안내하고 멈춘다.
+
+```text
+이 작업에는 SEOUL_OPEN_API_KEY 가 필요합니다.
+값을 채팅창에 붙여 넣지 말고 ~/.config/k-skill/secrets.env.plain 에 직접 채운 뒤
+sops 로 ~/.config/k-skill/secrets.env 로 암호화해 주세요.
+암호화가 끝나면 plaintext 파일은 지우고 bash scripts/check-setup.sh 로 다시 확인해 주세요.
+```
+
+시크릿이 없다는 이유로 비공식 미러 API나 다른 출처로 자동 우회하지 않는다.
 
 ```bash
 SOPS_AGE_KEY_FILE="$HOME/.config/k-skill/age/keys.txt" \

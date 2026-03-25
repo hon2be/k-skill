@@ -53,6 +53,32 @@ npx --yes skills add <owner/repo> \
 npx --yes skills add . --list
 ```
 
+유지보수자가 패키지/릴리스 설정까지 같이 검증하려면:
+
+```bash
+npm install
+npm run ci
+```
+
+## 패키지가 없을 때의 기본 동작
+
+스킬 실행에 필요한 Node/Python 패키지가 없으면 다른 방법으로 우회하지 말고 전역 설치를 먼저 시도하는 것을 기본으로 합니다.
+
+### Node 패키지
+
+```bash
+npm install -g kbo-game k-lotto
+export NODE_PATH="$(npm root -g)"
+```
+
+### Python 패키지
+
+```bash
+python3 -m pip install SRTrain korail2
+```
+
+운영체제 정책이나 권한 때문에 전역 설치가 막히면, 임의의 대체 구현으로 넘어가지 말고 그 차단 사유를 사용자에게 설명한 뒤 다음 설치 단계를 정합니다.
+
 ## npx도 없으면
 
 `npx`, `pnpm dlx`, `bunx` 중 아무것도 없으면 먼저 Node.js 계열 런타임을 설치해야 한다.

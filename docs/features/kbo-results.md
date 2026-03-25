@@ -9,7 +9,7 @@
 ## 먼저 필요한 것
 
 - Node.js 18+
-- `npm install kbo-game`
+- `npm install -g kbo-game`
 
 ## 입력값
 
@@ -18,15 +18,22 @@
 
 ## 기본 흐름
 
-1. 날짜 기준으로 경기 데이터를 조회합니다.
-2. 홈팀/원정팀, 경기 상태, 스코어를 사람 읽기 좋은 형태로 정리합니다.
-3. 팀 요청이 있으면 해당 팀 경기만 남깁니다.
+1. 패키지가 없으면 다른 방법으로 우회하지 말고 먼저 전역 설치합니다.
+2. 날짜 기준으로 경기 데이터를 조회합니다.
+3. 홈팀/원정팀, 경기 상태, 스코어를 사람 읽기 좋은 형태로 정리합니다.
+4. 팀 요청이 있으면 해당 팀 경기만 남깁니다.
 
 ## 예시
 
 ```bash
-node --input-type=module - <<'JS'
-import { getGame } from "kbo-game";
+GLOBAL_NPM_ROOT="$(npm root -g)" node --input-type=module - <<'JS'
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+
+const entry = pathToFileURL(
+  path.join(process.env.GLOBAL_NPM_ROOT, "kbo-game", "dist", "index.js"),
+).href;
+const { getGame } = await import(entry);
 
 const date = "2026-03-25";
 const games = await getGame(new Date(`${date}T00:00:00+09:00`));

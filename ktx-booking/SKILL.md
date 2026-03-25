@@ -30,7 +30,7 @@ metadata:
 ## Prerequisites
 
 - Python 3.10+
-- `python -m pip install korail2`
+- `python3 -m pip install korail2`
 - `sops` and `age` installed
 - common setup reviewed in `../k-skill-setup/SKILL.md`
 - secret policy reviewed in `../docs/security-and-secrets.md`
@@ -51,11 +51,32 @@ metadata:
 
 ## Workflow
 
-### 1. Search first
+### 0. Install the package globally when missing
+
+`python3 -c 'import korail2'` 가 실패하면 다른 구현으로 우회하지 말고 전역 Python 패키지 설치를 먼저 시도한다.
+
+```bash
+python3 -m pip install korail2
+```
+
+### 1. Stop for secure registration when secrets are missing
+
+`KSKILL_KTX_ID`, `KSKILL_KTX_PASSWORD`, `~/.config/k-skill/secrets.env`, `~/.config/k-skill/age/keys.txt` 중 하나라도 없으면 다음 식으로 안내하고 멈춘다.
+
+```text
+이 작업에는 KSKILL_KTX_ID, KSKILL_KTX_PASSWORD 가 필요합니다.
+값을 채팅창에 붙여 넣지 말고 ~/.config/k-skill/secrets.env.plain 에 직접 채운 뒤
+sops 로 ~/.config/k-skill/secrets.env 로 암호화해 주세요.
+암호화가 끝나면 plaintext 파일은 지우고 bash scripts/check-setup.sh 로 다시 확인해 주세요.
+```
+
+시크릿이 없다는 이유로 웹사이트를 직접 긁거나 다른 비공식 경로를 찾지 않는다.
+
+### 2. Search first
 
 ```bash
 SOPS_AGE_KEY_FILE="$HOME/.config/k-skill/age/keys.txt" \
-sops exec-env "$HOME/.config/k-skill/secrets.env" 'python - <<'"'"'PY'"'"'
+sops exec-env "$HOME/.config/k-skill/secrets.env" 'python3 - <<'"'"'PY'"'"'
 import os
 from korail2 import Korail, TrainType
 
@@ -77,7 +98,7 @@ PY
 '
 ```
 
-### 2. Present the shortlist
+### 3. Present the shortlist
 
 예매 전에 항상 아래를 확인한다.
 
@@ -86,11 +107,11 @@ PY
 - 좌석 가능 여부
 - 가격
 
-### 3. Reserve only after the target train is unambiguous
+### 4. Reserve only after the target train is unambiguous
 
 ```bash
 SOPS_AGE_KEY_FILE="$HOME/.config/k-skill/age/keys.txt" \
-sops exec-env "$HOME/.config/k-skill/secrets.env" 'python - <<'"'"'PY'"'"'
+sops exec-env "$HOME/.config/k-skill/secrets.env" 'python3 - <<'"'"'PY'"'"'
 import os
 from korail2 import AdultPassenger, Korail, ReserveOption, TrainType
 
@@ -115,13 +136,13 @@ PY
 '
 ```
 
-### 4. Inspect or cancel
+### 5. Inspect or cancel
 
 취소는 대상 예약을 다시 조회해 식별한 뒤에만 진행한다.
 
 ```bash
 SOPS_AGE_KEY_FILE="$HOME/.config/k-skill/age/keys.txt" \
-sops exec-env "$HOME/.config/k-skill/secrets.env" 'python - <<'"'"'PY'"'"'
+sops exec-env "$HOME/.config/k-skill/secrets.env" 'python3 - <<'"'"'PY'"'"'
 import os
 from korail2 import Korail
 

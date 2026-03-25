@@ -28,6 +28,14 @@ if [[ ! -f "$secrets_file" ]]; then
 fi
 
 if [[ "$missing" -ne 0 ]]; then
+  cat <<EOF
+next steps:
+  1. follow k-skill-setup / docs/setup.md
+  2. register required secrets in ~/.config/k-skill/secrets.env.plain
+  3. encrypt it to ~/.config/k-skill/secrets.env with sops
+  4. delete the plaintext file
+  5. run this check again
+EOF
   exit 1
 fi
 

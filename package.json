@@ -1,0 +1,25 @@
+{
+  "name": "k-skill",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present && ./scripts/validate-skills.sh",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run test --workspaces --if-present && ./scripts/validate-skills.sh",
+    "pack:dry-run": "npm pack --workspace k-lotto --dry-run",
+    "ci": "npm run lint && npm run typecheck && npm run test && npm run pack:dry-run",
+    "version-packages": "changeset version",
+    "release:npm": "changeset publish"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "@changesets/cli": "^2.29.5",
+    "typescript": "^5.8.2"
+  }
+}

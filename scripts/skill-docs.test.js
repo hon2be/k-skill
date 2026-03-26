@@ -29,10 +29,13 @@ test("hwp skill documents environment-aware routing and supported operations", (
 
 test("hwp skill documents inline image verification for markdown output", () => {
   const skill = read(path.join("hwp", "SKILL.md"));
+  const featureDoc = read(path.join("docs", "features", "hwp.md"));
 
   assert.match(skill, /hwpjs to-markdown document\.hwp -o output\.md --include-images/);
   assert.match(skill, /Markdown:.*(data:|base64)/);
+  assert.match(skill, /--images-dir/);
   assert.doesNotMatch(skill, /Markdown:.*이미지 경로 생성 여부 확인/);
+  assert.match(featureDoc, /--images-dir/);
 });
 
 test("repository docs advertise the hwp skill", () => {

@@ -50,7 +50,7 @@ curl -fsS --get 'https://opendart.fss.or.kr/api/fnlttSinglAcntAll.json' \
 
 ## 응답 해석 팁
 
-- `status: "000"`이 정상. 그 외는 에러 (010=미등록 키, 020=요청 제한 초과, 013=데이터 없음).
+- `status: "000"`이 정상. 그 외는 에러 (010=미등록 키, 011=사용 불가 키, 012=접근 불가 IP, 013=조회된 데이터 없음, 020=요청 제한 초과, 100=필드 오류).
 - 재무제표의 `thstrm_amount`=당기, `frmtrm_amount`=전기, `bfefrmtrm_amount`=전전기.
 - `reprt_code`: 11011(사업보고서), 11012(반기), 11013(1분기), 11014(3분기).
 - `fs_div`: CFS(연결), OFS(개별).
@@ -65,9 +65,9 @@ curl -fsS --get 'https://opendart.fss.or.kr/api/fnlttSinglAcntAll.json' \
 ## 에러/제약
 
 - `API_K_DART` 미설정 시 API 호출 불가 → 키 발급 안내
-- DART API 일일 요청 한도: 키당 10,000건
+- DART API 요청 한도: 개인 인증키 기준 일일 20,000건 + 분당 약 1,000회 throttle (기업 인증키는 별도 한도 신청 가능)
 - 상장폐지·오래된 비상장 법인은 데이터가 없을 수 있음
-- `list.json`의 `corp_name` 파라미터는 필터로 동작하지 않음 → `corp_code` 필수
+- `list.json`의 `corp_name` 파라미터는 검색 필터로 동작하지 않음 → `corpCode.xml` ZIP을 받아 `corp_code`(8자리 고유번호)를 먼저 확보한 뒤 `corp_code` 로 호출 필수
 
 ## 참고 링크
 

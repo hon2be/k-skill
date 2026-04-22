@@ -93,9 +93,9 @@ $xml.result.list | Where-Object { $_.corp_name -like '*삼성전자*' -and $_.st
 GET /api/list.json?crtfc_key={key}&corp_code={code}&bgn_de={YYYYMMDD}&end_de={YYYYMMDD}&page_no=1&page_count=10
 ```
 
-선택 파라미터: `corp_name`, `pblntf_ty`(공시유형), `pblntf_detail_ty`, `corp_cls`(Y:유가, K:코스닥, N:코넥스, E:기타), `sort`(date|crp|rpt), `sort_mth`(asc|desc)
+선택 파라미터: `pblntf_ty`(공시유형), `pblntf_detail_ty`, `corp_cls`(Y:유가, K:코스닥, N:코넥스, E:기타), `sort`(date|crp|rpt), `sort_mth`(asc|desc), `last_reprt_at`(Y|N)
 
-`corp_code` 없이 `corp_name`으로도 검색 가능하다.
+> **주의:** `list.json`은 `corp_name` 파라미터를 검색 필터로 지원하지 않는다. 회사명만 알고 있다면 위 "corp_code 확보 절차"로 먼저 `corp_code`(8자리 고유번호)를 얻은 뒤 호출해야 한다.
 
 ### 2. 기업개황
 
@@ -180,12 +180,14 @@ GET /api/cmpDvmgDecsn.json?crtfc_key={key}&corp_code={code}&bgn_de={YYYYMMDD}&en
 
 ## Example requests
 
-공시검색 (회사명):
+공시검색 (corp_code 기준, 삼성전자):
 
 ```bash
+# 1. 먼저 위 "corp_code 확보 절차"로 corp_code(예: 삼성전자=00126380) 획득
+# 2. corp_code로 기간 내 공시 조회
 curl -fsS --get 'https://opendart.fss.or.kr/api/list.json' \
   --data-urlencode "crtfc_key=$API_K_DART" \
-  --data-urlencode 'corp_name=삼성전자' \
+  --data-urlencode 'corp_code=00126380' \
   --data-urlencode 'bgn_de=20260101' \
   --data-urlencode 'end_de=20260419' \
   --data-urlencode 'page_count=5'
@@ -251,11 +253,14 @@ curl -fsS --get 'https://opendart.fss.or.kr/api/cvbdIsDecsn.json' \
 | 000 | 정상 |
 | 010 | 등록되지 않은 키 |
 | 011 | 사용할 수 없는 키 |
-| 013 | 접근 권한 없음 |
-| 020 | 요청 제한 초과 |
-| 100 | 필드 오류 |
-| 800 | 원천 시스템 오류 |
-| 900 | 미정의 오류 |
+| 012 | 접근할 수 없는 IP |
+| 013 | 조회된 데이터 없음 |
+| 014 | 파일이 존재하지 않음 |
+| 020 | 요청 제한 초과 (일일 한도 또는 분당 throttle) |
+| 021 | 조회 가능한 회사 개수 초과 (최대 100개) |
+| 100 | 필드 오류 (필드의 부적절한 값) |
+| 800 | 원천 시스템 점검 중 |
+| 900 | 정의되지 않은 오류 |
 
 ### 공시검색 응답 예시
 
@@ -311,8 +316,9 @@ curl -fsS --get 'https://opendart.fss.or.kr/api/cvbdIsDecsn.json' \
 ## Response policy
 
 - `status`가 `"000"`이 아니면 에러 메시지를 사용자에게 안내한다.
-- `status: "020"` (요청 제한 초과)이면 잠시 후 재시도를 안내한다.
-- 종목명이 모호하면 먼저 `list.json`의 `corp_name`으로 검색해 `corp_code`를 확보한 뒤 후속 API를 호출한다.
+- `status: "013"` (조회된 데이터 없음) 이면 기간/보고서 종류/`corp_code` 를 재확인하도록 안내한다.
+- `status: "020"` (요청 제한 초과)이면 일일 한도 또는 분당 throttle을 알리고 잠시 후 재시도를 안내한다.
+- 종목명만 알고 있다면 위 "corp_code 확보 절차"의 `corpCode.xml` 파싱으로 먼저 `corp_code`를 확보한 뒤 후속 API를 호출한다 (`list.json`은 `corp_name` 검색 필터를 지원하지 않는다).
 - 재무제표 조회 시 `reprt_code` 를 사용자가 지정하지 않으면 사업보고서(11011)를 기본값으로 사용한다.
 - `fs_div`를 지정하지 않으면 연결(CFS)을 기본값으로 사용한다.
 - 주요사항보고서(8~14번)는 날짜 범위가 필요하다. 사용자가 기간을 지정하지 않으면 최근 1년을 기본으로 한다.
@@ -344,4 +350,5 @@ curl -fsS --get 'https://opendart.fss.or.kr/api/cvbdIsDecsn.json' \
 
 - 공식 데이터 출처: [DART OpenAPI](https://opendart.fss.or.kr/intro/main.do)
 - 이 스킬은 read-only 조회 전용이다.
-- DART API 일일 요청 한도는 키당 10,000건이다.
+- DART API 요청 한도: 개인 인증키 기준 **일일 20,000건** + **분당 약 1,000회** throttle. 기업 인증키는 별도 한도 신청 가능.
+- 정확한 최신 한도는 [오픈API 이용현황](https://opendart.fss.or.kr/mng/apiUsageStatusView.do) 페이지에서 확인할 수 있다.

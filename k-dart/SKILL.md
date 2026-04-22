@@ -90,24 +90,31 @@ $xml.result.list | Where-Object { $_.corp_name -like '*삼성전자*' -and $_.st
 ### 1. 공시검색
 
 ```http
-GET /api/list.json?crtfc_key={key}
-     [&corp_code={code}] [&bgn_de={YYYYMMDD}] [&end_de={YYYYMMDD}]
-     [&last_reprt_at=Y|N] [&pblntf_ty=A|B|C|...] [&pblntf_detail_ty=...]
+GET /api/list.json?crtfc_key={key}&bgn_de={YYYYMMDD}&end_de={YYYYMMDD}
+     [&corp_code={code}]
+     [&last_reprt_at=Y|N] [&pblntf_ty=A..J] [&pblntf_detail_ty=...]
      [&corp_cls=Y|K|N|E] [&sort=date|crp|rpt] [&sort_mth=asc|desc]
      [&page_no=1] [&page_count=10]
 ```
 
-공식 가이드(DS001/2019001) 기준 **필수는 `crtfc_key` 뿐**이며 나머지는 모두 선택사항이다.
+공식 가이드(DS001/2019001) 기준 필수/선택 구분:
 
-- `corp_code` (선택): 8자리 고유번호. 미지정 시 전체 시장 공시 목록 검색.
-- `bgn_de` (선택): 미지정 시 default = `end_de`.
-- `end_de` (선택): 미지정 시 default = 검색 당일.
-- `pblntf_ty` (선택): A=정기공시, B=주요사항보고, C=발행공시, D=지분공시, E=기타공시 등.
-- `corp_cls` (선택): Y=유가, K=코스닥, N=코넥스, E=기타.
+| 파라미터 | 필수 | 기본값 / 비고 |
+|---|---|---|
+| `crtfc_key` | Y | 발급받은 인증키 (40자리) |
+| `bgn_de` | Y | 기본값 = `end_de`. **`corp_code` 가 없는 경우 검색기간은 3개월로 제한** |
+| `end_de` | Y | 기본값 = 당일 |
+| `corp_code` | N | 8자리 고유번호. 미지정 시 전체 시장 검색 |
+| `last_reprt_at` | N | Y or N. 기본값 N (정정이 있는 경우 최종정정만 검색) |
+| `pblntf_ty` | N | A=정기공시, B=주요사항보고, C=발행공시, D=지분공시, E=기타공시, F=외부감사관련, G=펀드공시, H=자산유동화, I=거래소공시, J=공정위공시 |
+| `pblntf_detail_ty` | N | (※ pblntf_ty 별 상세코드. 예: A001=사업보고서, B001=주요사항보고서, F001=감사보고서 등) |
+| `corp_cls` | N | Y=유가, K=코스닥, N=코넥스, E=기타. 미지정 시 전체. **복수 조건 불가** |
+| `sort` | N | `date`(접수일자) / `crp`(회사명) / `rpt`(보고서명). 기본값 `date` |
+| `sort_mth` | N | `asc` / `desc`. 기본값 `desc` |
+| `page_no` | N | 페이지 번호. 기본값 1 |
+| `page_count` | N | 페이지당 건수. 기본값 10, **최대값 100** |
 
-> **주의 1:** 공식 요청 파라미터 표에 `corp_name` 은 **존재하지 않는다**. 회사명을 기준으로 특정 기업 공시만 좁혀 보려면 위 "corp_code 확보 절차"로 먼저 `corp_code`(8자리 고유번호)를 얻은 뒤 호출한다.
->
-> **주의 2:** 외부 사용 사례에서 관찰된 동작으로, `corp_code` 를 지정하지 **않은** 호출은 `bgn_de`~`end_de` 검색 기간이 **3개월 이내**로 제한되는 경향이 있다 (공식 가이드에 별도로 명시되지는 않음). 특정 기업의 장기간 공시를 모으려면 `corp_code` 와 함께 호출한다.
+> **주의:** 공식 요청 파라미터 표에 `corp_name` 은 **존재하지 않는다**. 회사명을 기준으로 특정 기업 공시만 좁혀 보려면 위 "corp_code 확보 절차"로 먼저 `corp_code`(8자리 고유번호)를 얻은 뒤 호출한다.
 
 ### 2. 기업개황
 
@@ -215,7 +222,7 @@ curl -fsS --get 'https://opendart.fss.or.kr/api/list.json' \
   --data-urlencode 'page_count=5'
 ```
 
-공시검색 (전체 시장 최근 공시, corp_code 미지정 — 외부 사례상 검색 기간 ≤ 3개월 권장):
+공시검색 (전체 시장 최근 공시, corp_code 미지정 — 공식 spec상 검색 기간 ≤ 3개월):
 
 ```bash
 curl -fsS --get 'https://opendart.fss.or.kr/api/list.json' \
@@ -372,7 +379,7 @@ curl -fsS --get 'https://opendart.fss.or.kr/api/cvbdIsDecsn.json' \
 - `status`가 `"000"`이 아니면 에러 메시지를 사용자에게 안내한다.
 - `status: "013"` (조회된 데이터 없음) 이면 기간/보고서 종류/`corp_code` 를 재확인하도록 안내한다.
 - `status: "020"` (요청 제한 초과)이면 호출 한도 도달 가능성을 안내한다. 공식 가이드는 "일반적으로 20,000건 이상 요청 시" 발생한다고만 명시하며, 키별로 별도 한도가 설정되어 있으면 다른 임계치에서도 발생할 수 있음을 함께 알린다. 잠시 후 재시도를 권한다.
-- 종목명만 알고 있다면 위 "corp_code 확보 절차"의 `corpCode.xml` 파싱으로 먼저 `corp_code`를 확보한 뒤 후속 API를 호출한다 (`list.json`은 `corp_name` 검색 필터를 지원하지 않는다).
+- 종목명만 알고 있다면 위 "corp_code 확보 절차"의 `corpCode.xml` 파싱으로 먼저 `corp_code`를 확보한 뒤 후속 API를 호출한다 (`list.json`의 공식 요청 파라미터에는 `corp_name` 이 존재하지 않는다).
 - 재무제표 조회 시 `reprt_code` 를 사용자가 지정하지 않으면 사업보고서(11011)를 기본값으로 사용한다.
 - `fs_div`를 지정하지 않으면 연결(CFS)을 기본값으로 사용한다.
 - 주요사항보고서(9~15번)는 날짜 범위가 필요하다. 사용자가 기간을 지정하지 않으면 최근 1년을 기본으로 한다.

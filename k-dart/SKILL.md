@@ -90,15 +90,24 @@ $xml.result.list | Where-Object { $_.corp_name -like '*삼성전자*' -and $_.st
 ### 1. 공시검색
 
 ```http
-GET /api/list.json?crtfc_key={key}&bgn_de={YYYYMMDD}&end_de={YYYYMMDD}&page_no=1&page_count=10
-     [&corp_code={code}] [&pblntf_ty=...] [&corp_cls=...] [&sort=...] [&sort_mth=...] [&last_reprt_at=Y]
+GET /api/list.json?crtfc_key={key}
+     [&corp_code={code}] [&bgn_de={YYYYMMDD}] [&end_de={YYYYMMDD}]
+     [&last_reprt_at=Y|N] [&pblntf_ty=A|B|C|...] [&pblntf_detail_ty=...]
+     [&corp_cls=Y|K|N|E] [&sort=date|crp|rpt] [&sort_mth=asc|desc]
+     [&page_no=1] [&page_count=10]
 ```
 
-선택 파라미터: `corp_code`, `pblntf_ty`(공시유형), `pblntf_detail_ty`, `corp_cls`(Y:유가, K:코스닥, N:코넥스, E:기타), `sort`(date|crp|rpt), `sort_mth`(asc|desc), `last_reprt_at`(Y|N)
+공식 가이드(DS001/2019001) 기준 **필수는 `crtfc_key` 뿐**이며 나머지는 모두 선택사항이다.
 
-> **주의 1:** `list.json`은 `corp_name` 파라미터를 검색 필터로 지원하지 않는다. 회사명을 기준으로 특정 기업 공시만 좁혀 보려면 위 "corp_code 확보 절차"로 먼저 `corp_code`(8자리 고유번호)를 얻은 뒤 호출한다.
+- `corp_code` (선택): 8자리 고유번호. 미지정 시 전체 시장 공시 목록 검색.
+- `bgn_de` (선택): 미지정 시 default = `end_de`.
+- `end_de` (선택): 미지정 시 default = 검색 당일.
+- `pblntf_ty` (선택): A=정기공시, B=주요사항보고, C=발행공시, D=지분공시, E=기타공시 등.
+- `corp_cls` (선택): Y=유가, K=코스닥, N=코넥스, E=기타.
+
+> **주의 1:** 공식 요청 파라미터 표에 `corp_name` 은 **존재하지 않는다**. 회사명을 기준으로 특정 기업 공시만 좁혀 보려면 위 "corp_code 확보 절차"로 먼저 `corp_code`(8자리 고유번호)를 얻은 뒤 호출한다.
 >
-> **주의 2:** `corp_code` 는 선택사항이다. 다만 `corp_code` 를 지정하지 **않은** 호출은 검색 기간이 **3개월 이내**(bgn_de ~ end_de 차이 ≤ 3개월)로 제한된다. 전체 시장의 최근 공시 목록을 빠르게 훑을 때는 `corp_code` 없이 호출하는 편이 효율적이다.
+> **주의 2:** 외부 사용 사례에서 관찰된 동작으로, `corp_code` 를 지정하지 **않은** 호출은 `bgn_de`~`end_de` 검색 기간이 **3개월 이내**로 제한되는 경향이 있다 (공식 가이드에 별도로 명시되지는 않음). 특정 기업의 장기간 공시를 모으려면 `corp_code` 와 함께 호출한다.
 
 ### 2. 기업개황
 
@@ -193,11 +202,11 @@ GET /api/cmpDvmgDecsn.json?crtfc_key={key}&corp_code={code}&bgn_de={YYYYMMDD}&en
 
 ## Example requests
 
-공시검색 (corp_code 기준, 삼성전자):
+공시검색 (특정 기업, 삼성전자):
 
 ```bash
 # 1. 먼저 위 "corp_code 확보 절차"로 corp_code(예: 삼성전자=00126380) 획득
-# 2. corp_code로 기간 내 공시 조회 (corp_code 지정 시 기간 제한 없음)
+# 2. corp_code로 기간 내 공시 조회
 curl -fsS --get 'https://opendart.fss.or.kr/api/list.json' \
   --data-urlencode "crtfc_key=$API_K_DART" \
   --data-urlencode 'corp_code=00126380' \
@@ -206,7 +215,7 @@ curl -fsS --get 'https://opendart.fss.or.kr/api/list.json' \
   --data-urlencode 'page_count=5'
 ```
 
-공시검색 (전체 시장 최근 공시, corp_code 미지정 시 검색 기간 ≤ 3개월 제한):
+공시검색 (전체 시장 최근 공시, corp_code 미지정 — 외부 사례상 검색 기간 ≤ 3개월 권장):
 
 ```bash
 curl -fsS --get 'https://opendart.fss.or.kr/api/list.json' \
@@ -301,7 +310,7 @@ curl -fsS --get 'https://opendart.fss.or.kr/api/cvbdIsDecsn.json' \
 | 012 | 접근할 수 없는 IP |
 | 013 | 조회된 데이터 없음 |
 | 014 | 파일이 존재하지 않음 |
-| 020 | 요청 제한 초과 (일반적으로 20,000건 이상 요청 시) |
+| 020 | 요청 제한 초과 (공식 가이드: 일반적으로 20,000건 이상 요청 시 발생. 키별 별도 한도가 설정된 경우에도 동일 코드가 반환될 수 있음) |
 | 021 | 조회 가능한 회사 개수 초과 (최대 100개) |
 | 100 | 필드 오류 (필드의 부적절한 값) |
 | 800 | 원천 시스템 점검 중 |
@@ -362,7 +371,7 @@ curl -fsS --get 'https://opendart.fss.or.kr/api/cvbdIsDecsn.json' \
 
 - `status`가 `"000"`이 아니면 에러 메시지를 사용자에게 안내한다.
 - `status: "013"` (조회된 데이터 없음) 이면 기간/보고서 종류/`corp_code` 를 재확인하도록 안내한다.
-- `status: "020"` (요청 제한 초과)이면 일일 호출 한도(공식 가이드: 일반적으로 20,000건/일) 도달 가능성을 안내하고 잠시 후 재시도하도록 한다.
+- `status: "020"` (요청 제한 초과)이면 호출 한도 도달 가능성을 안내한다. 공식 가이드는 "일반적으로 20,000건 이상 요청 시" 발생한다고만 명시하며, 키별로 별도 한도가 설정되어 있으면 다른 임계치에서도 발생할 수 있음을 함께 알린다. 잠시 후 재시도를 권한다.
 - 종목명만 알고 있다면 위 "corp_code 확보 절차"의 `corpCode.xml` 파싱으로 먼저 `corp_code`를 확보한 뒤 후속 API를 호출한다 (`list.json`은 `corp_name` 검색 필터를 지원하지 않는다).
 - 재무제표 조회 시 `reprt_code` 를 사용자가 지정하지 않으면 사업보고서(11011)를 기본값으로 사용한다.
 - `fs_div`를 지정하지 않으면 연결(CFS)을 기본값으로 사용한다.
@@ -395,4 +404,4 @@ curl -fsS --get 'https://opendart.fss.or.kr/api/cvbdIsDecsn.json' \
 
 - 공식 데이터 출처: [DART OpenAPI](https://opendart.fss.or.kr/intro/main.do)
 - 이 스킬은 read-only 조회 전용이다.
-- DART API 요청 한도: 공식 가이드는 "**일반적으로 20,000건 이상의 요청** 에 대해 `020` (요청 제한 초과)이 발생한다" 고만 명시한다 (분당 throttle 등 세부 제약은 공개 가이드에 별도로 명시되어 있지 않음). 본인 키의 정확한 사용 현황은 로그인 후 [OpenDART 이용현황](https://opendart.fss.or.kr/mng/apiUsageStatusView.do) 페이지에서 확인할 수 있다.
+- DART API 요청 한도: 공식 가이드(`020` 메시지 설명)는 "**일반적으로 20,000건 이상의 요청** 에 대해 `020` (요청 제한 초과)이 발생하며, **키별로 별도 한도가 설정된 경우** 다른 임계치에서도 동일 코드가 반환될 수 있다"고 명시한다. 분당 throttle 등 세부 제약 수치는 공개 가이드에 별도로 게시되어 있지 않다. 본인 키의 정확한 사용 현황은 로그인 후 [OpenDART 이용현황](https://opendart.fss.or.kr/mng/apiUsageStatusView.do) 페이지에서 확인할 수 있다.
